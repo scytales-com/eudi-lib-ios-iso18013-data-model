@@ -20,9 +20,9 @@ import Foundation
 import SwiftCBOR
 #if canImport(CryptoKit)
 import CryptoKit
-#else 
+#else
 import Crypto
-#endif 
+#endif
 
 /// Device engagement information
 ///
@@ -51,28 +51,34 @@ public struct DeviceEngagement: Sendable {
     public var privateKey: CoseKeyPrivate?
 	public var qrCoded: [UInt8]?
 
-	
+
 	/// Generate device engagement
 	/// - Parameters
 	///    - isBleServer: true for BLE mdoc peripheral server mode, false for BLE mdoc central client mode
 	///    - crv: The EC curve type used in the mdoc ephemeral private key
-    public init?(isBleServer: Bool?, rfus: [String]? = nil) {
+    public init?(isBleServer: Bool?, rfus: [String]? = nil, uuid: UUID, keyPrivate: CoseKeyPrivate? = nil) {
 		self.rfus = rfus
-        if let isBleServer { deviceRetrievalMethods = [.ble(isBleServer: isBleServer, uuid: UUID())] }
+        if let isBleServer { deviceRetrievalMethods = [.ble(isBleServer: isBleServer, uuid: uuid, )] }
+        if let keyPrivate { setPrivateKey(keyPrivate: keyPrivate) }
 	}
 	/// initialize from cbor data
 	public init?(data: [UInt8]) {
 		guard let obj = try? CBOR.decode(data) else { return nil }
 		self.init(cbor: obj)
 	}
-    
+
     public mutating func makePrivateKey(crv: CoseEcCurve, secureArea: any SecureArea) async throws {
         var pk = CoseKeyPrivate(secureArea: secureArea)
         try await pk.makeKey(curve: crv)
         privateKey = pk
         security = Security(deviceKey: pk.key)
     }
-	
+
+    public mutating func setPrivateKey(keyPrivate: CoseKeyPrivate) {
+        privateKey = keyPrivate
+        security = Security(deviceKey: keyPrivate.key)
+    }
+
 	public var isBleServer: Bool? {
 		guard let deviceRetrievalMethods else { return nil}
 		for case let .ble(isBleServer, _) in deviceRetrievalMethods {
@@ -80,7 +86,7 @@ public struct DeviceEngagement: Sendable {
 		}
 		return nil
 	}
-	
+
 	public var ble_uuid: String? {
 		guard let deviceRetrievalMethods else { return nil}
 		for case let .ble(_, uuid) in deviceRetrievalMethods {

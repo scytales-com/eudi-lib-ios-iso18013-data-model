@@ -91,11 +91,12 @@ public actor DummySecureKeyStorage: MdocDataModel18013.SecureKeyStorage {
 extension MdocDataModel18013.CoseKeyPrivate {
   // decode cbor string
     public init?(p256data base64: String) {
-            guard let d = Data(base64Encoded: base64), let obj = try? CBOR.decode([UInt8](d)), let coseKey = CoseKey(cbor: obj), let cd = obj[-4], case let CBOR.byteString(rd) = cd else { return nil }
+        guard let d = Data(base64Encoded: base64), let obj = try? CBOR.decode([UInt8](d)), let coseKey = CoseKey(cbor: obj), let cd = obj[-4], case let CBOR.byteString(rd) = cd else { return nil }
         let sampleSA = InMemoryP256SecureArea(storage: DummySecureKeyStorage())
         let keyData = NSMutableData(bytes: [0x04], length: [0x04].count)
         keyData.append(Data(coseKey.x)); keyData.append(Data(coseKey.y));  keyData.append(Data(rd))
         sampleSA.x963Key = keyData as Data
         self.init(secureArea: sampleSA)
+        key = coseKey
     }
 }

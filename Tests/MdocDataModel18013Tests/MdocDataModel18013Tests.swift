@@ -160,13 +160,25 @@ final class MdocDataModel18013Tests: XCTestCase {
         let strQR = de.qrCode
 		XCTAssertNotNil(DeviceEngagement.getQrCodeImage(qrCode: strQR, inputCorrectionLevel: .m))
     }
+#endif
 
     func testGenerateBLEengageQRCodePayload() async throws {
-        var de = try XCTUnwrap(DeviceEngagement(isBleServer: true))
+        var de = try XCTUnwrap(DeviceEngagement(isBleServer: true, uuid: UUID()))
         try await de.makePrivateKey(crv: .P256, secureArea: InMemoryP256SecureArea(storage: DummySecureKeyStorage()))
-        XCTAssertNotNil(de.getQrCodePayload())
+        let payload = de.getQrCodePayload()
+        XCTAssertNotNil(payload)
+        print(payload)
     }
-  #endif
+
+     func testFixedBLEengageQRCodePayload() async throws {
+         var de = try XCTUnwrap(DeviceEngagement(isBleServer: true, uuid: UUID(uuidString: "8d9c1507-a2e8-4837-9a59-3bd93ea6c081")!))
+        //try await de.makePrivateKey(crv: .P256, secureArea: InMemoryP256SecureArea(storage: DummySecureKeyStorage()))
+        de.setPrivateKey(keyPrivate: Self.pk)
+        let payload = de.getQrCodePayload()
+        XCTAssertNotNil(payload)
+        print(payload)
+    }
+
 
   func test_iso_date_string() {
 	let df = ISO8601DateFormatter(); df.formatOptions = [.withFullDate, .withTime, .withTimeZone, .withColonSeparatorInTime, .withDashSeparatorInDate]
